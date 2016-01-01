@@ -1,0 +1,4 @@
+[DEFAULT]
+migration_table = _yoyo_migration
+dburi = mysql://test:test@localhost/livermore?local_infile=1
+
