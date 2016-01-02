@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/wuyq101/livermore/cmd"
 	"github.com/wuyq101/livermore/config"
 	"github.com/wuyq101/livermore/model"
 	"github.com/wuyq101/livermore/workflow"
+	"os"
+	"runtime"
 )
 
 func main() {
@@ -25,4 +28,14 @@ func main() {
 
 	fmt.Println("Start to insert a stock")
 	w.Model().InsertStock(&model.Stock{Name: "test"})
+
+	fmt.Println("Start to init cobra ...")
+	if err := cmd.RootCmd.Execute(); err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
+}
+
+func init() {
+	runtime.GOMAXPROCS(runtime.NumCPU())
 }
