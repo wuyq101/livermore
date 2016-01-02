@@ -25,4 +25,5 @@ func init() {
 	orm.SetMaxIdleConns("default", 30)
 	orm.SetMaxOpenConns("default", 30)
 	orm.RegisterModel(new(Stock))
+	orm.RegisterModel(new(StockDaily))
 }

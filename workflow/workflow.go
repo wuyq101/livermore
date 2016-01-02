@@ -8,15 +8,17 @@ type WorkFlow struct {
 	m *model.Model
 }
 
-func NewWorkFlow(m *model.Model) *WorkFlow {
-	return &WorkFlow{m: m}
+var w *WorkFlow
+
+func Instance() *WorkFlow {
+	if w == nil {
+		w = &WorkFlow{
+			m: model.NewModel(),
+		}
+	}
+	return w
 }
 
 func (w *WorkFlow) Model() *model.Model {
 	return w.m
-}
-
-func (w *WorkFlow) UpdateStockMeta() error {
-	w.m.InsertStock(&model.Stock{})
-	return nil
 }

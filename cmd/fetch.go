@@ -3,25 +3,33 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/wuyq101/livermore/workflow"
 )
 
-func init() {
-	fetchCmd.Flags().StringVarP(&Source, "source", "s", "", "Source directory to read from")
-	RootCmd.AddCommand(fetchCmd)
-}
+var FetchAll bool
 
-var Source string
+func init() {
+	RootCmd.AddCommand(fetchCmd)
+	fetchCmd.Flags().BoolVarP(&FetchAll, "all", "a", false, "Fetch all stock info current in database.")
+}
 
 var fetchCmd = &cobra.Command{
 	Use:   "fetch",
 	Short: "Fetch stock data by code",
 	Long: `Fetch stock data by code
-	
+          stock code: sh600036, sz000166
 	`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("Start to fetch stock data ...")
+		w := workflow.Instance()
+		if FetchAll {
+			w.FetchAllStockInfo()
+			return
+		}
 		fmt.Printf("args %q \n", args)
-		fmt.Println("Version ", Verbose)
-		fmt.Println("Source", Source)
+		if args == nil || len(args) <= 0 {
+			fmt.Println("please input stock code, like sh600036 sz000166")
+		}
+		w.FetchStockInfo(args)
 	},
 }

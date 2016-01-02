@@ -24,3 +24,4 @@ _testmain.go
 *.prof
 
 livermore
+.DS_Store

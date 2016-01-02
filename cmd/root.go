@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/wuyq101/livermore/workflow"
 )
 
 var Verbose bool
@@ -15,8 +15,8 @@ var RootCmd = &cobra.Command{
 	       More detail please visit : https://github.com/wuyq101/livermore
 		`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// Do Stuff Here
-		fmt.Println("This is test from cobra")
+		//init work flow
+		workflow.Instance()
 	},
 }
 
