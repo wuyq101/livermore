@@ -10,8 +10,9 @@ var Verbose bool
 var RootCmd = &cobra.Command{
 	Use:   "livermore",
 	Short: "Livermore is a command line tool for stock data fetch and display",
-	Long: `Livermore is written in Go. 
-	       More detail pls visit : https://github.com/wuyq101/livermore
+	Long: `Livermore is a command line tool for stock data fetch and display.
+		   It was written in Go. 
+	       More detail please visit : https://github.com/wuyq101/livermore
 		`,
 	Run: func(cmd *cobra.Command, args []string) {
 		// Do Stuff Here
