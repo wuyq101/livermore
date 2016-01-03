@@ -26,4 +26,5 @@ func init() {
 	orm.SetMaxOpenConns("default", 30)
 	orm.RegisterModel(new(Stock))
 	orm.RegisterModel(new(StockDaily))
+	orm.RegisterModel(new(MoneyFlow))
 }

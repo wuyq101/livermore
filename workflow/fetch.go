@@ -19,8 +19,87 @@ func (w *WorkFlow) FetchStockInfo(codes []string) error {
 	for _, code := range codes {
 		w.FetchStockInfoByCode(code)
 		w.FetchStockDailyByCode(code)
+		w.FetchMoneyFlow(code)
 	}
 	return nil
+}
+
+func (w *WorkFlow) FetchMoneyFlow(code string) error {
+	mf, err := w.m.GetLastMoneyFlow(code)
+	cnt := int64(10000) //抓取条数
+	if err == nil && mf != nil {
+		t, _ := time.ParseInLocation("20060102", mf.MarketDay, time.Local)
+		cnt = int64(time.Now().Sub(t).Hours()/24.0) + 2
+	}
+	logger.Info("cnd %d, code %s", cnt, code)
+	stock, err := w.m.GetStockByCode(code)
+	if err != nil {
+		logger.Error("Failed to get stock by code %s, err %+v", code, err)
+		return err
+	}
+	url := fmt.Sprintf("http://vip.stock.finance.sina.com.cn/quotes_service/api/json_v2.php/MoneyFlow.ssl_qsfx_lscjfb?page=1&num=%d&sort=opendate&asc=0&daima=%s", cnt, code)
+	content, err := util.HttpGet(url)
+	html := string(content)
+	html = strings.Replace(html, "opendate", `"opendate"`, -1)
+	html = strings.Replace(html, "trade", `"trade"`, -1)
+	html = strings.Replace(html, "turnover", `"turnover"`, -1)
+	html = strings.Replace(html, "netamount", `"netamount"`, -1)
+	html = strings.Replace(html, "ratioamount", `"ratioamount"`, -1)
+	html = strings.Replace(html, "changeratio", `"changeratio"`, -1)
+	html = strings.Replace(html, "r0", `"r0"`, -1)
+	html = strings.Replace(html, `"r0"_net`, `"r0_net"`, -1)
+	html = strings.Replace(html, "r1", `"r1"`, -1)
+	html = strings.Replace(html, `"r1"_net`, `"r1_net"`, -1)
+	html = strings.Replace(html, "r2", `"r2"`, -1)
+	html = strings.Replace(html, `"r2"_net`, `"r2_net"`, -1)
+	html = strings.Replace(html, "r3", `"r3"`, -1)
+	html = strings.Replace(html, `"r3"_net`, `"r3_net"`, -1)
+	reg := regexp.MustCompile("{(.*?)}")
+	strs := reg.FindAllString(html, -1)
+	out := make(map[string]interface{})
+	for i := 0; i < len(strs); i++ {
+		err = json.Unmarshal([]byte(strs[i]), &out)
+		if err == nil {
+			mf, err := w.parseMoneyFlow(out, code, stock.Name)
+			if err == nil {
+				w.m.InsertOrUpdateMoneyFlow(mf)
+			} else {
+				logger.Error("err: %+v", err)
+			}
+		} else {
+			logger.Error("err %+v", err)
+		}
+	}
+	return nil
+}
+
+func (w *WorkFlow) parseMoneyFlow(mp map[string]interface{}, code string, name string) (*model.MoneyFlow, error) {
+	mf := &model.MoneyFlow{
+		Name: name,
+		Code: code,
+	}
+	str := mp["opendate"].(string)
+	str = strings.Replace(str, "-", "", -1)
+	mf.MarketDay = str
+	//收盘价
+	mf.ClosingPrice = w.getFloat2Int64(mp, "trade", 100)
+	//涨跌幅
+	mf.IncreaseRate = w.getFloat2Int64(mp, "changeratio", 10000)
+	//换手率
+	mf.TurnoverRate = w.getFloat2Int64(mp, "turnover", 100)
+	//净流入
+	mf.NetAmount = w.getFloat2Int64(mp, "netamount", 10000)
+	//净流入比率
+	mf.RatioAmount = w.getFloat2Int64(mp, "ratioamount", 10000)
+	mf.R0 = w.getFloat2Int64(mp, "r0", 10000)
+	mf.R0Net = w.getFloat2Int64(mp, "r0_net", 10000)
+	mf.R1 = w.getFloat2Int64(mp, "r1", 10000)
+	mf.R1Net = w.getFloat2Int64(mp, "r1_net", 10000)
+	mf.R2 = w.getFloat2Int64(mp, "r2", 10000)
+	mf.R2Net = w.getFloat2Int64(mp, "r2_net", 10000)
+	mf.R3 = w.getFloat2Int64(mp, "r3", 10000)
+	mf.R3Net = w.getFloat2Int64(mp, "r3_net", 10000)
+	return mf, nil
 }
 
 func (w *WorkFlow) FetchAllStockInfo() error {
@@ -105,25 +184,25 @@ func (w *WorkFlow) FetchStockDailyByCode(code string) error {
 
 	ff := out["fund_flow"].(map[string]interface{})
 	//主力买入
-	sd.MainBuy = w.getFloat2Int64(ff, "zhulimairu")
-	sd.MainBuyRate = w.getFloat2Int64(ff, "zhulimairubi")
+	sd.MainBuy = w.getFloat2Int64(ff, "zhulimairu", 100)
+	sd.MainBuyRate = w.getFloat2Int64(ff, "zhulimairubi", 100)
 	//主力卖出
-	sd.MainSell = w.getFloat2Int64(ff, "zhulimaichu")
-	sd.MainSellRate = w.getFloat2Int64(ff, "zhulimaichubi")
+	sd.MainSell = w.getFloat2Int64(ff, "zhulimaichu", 100)
+	sd.MainSellRate = w.getFloat2Int64(ff, "zhulimaichubi", 100)
 	//散户买入
-	sd.IndividualBuy = w.getFloat2Int64(ff, "sanhumairu")
-	sd.IndividualBuyRate = w.getFloat2Int64(ff, "sanhumairubi")
+	sd.IndividualBuy = w.getFloat2Int64(ff, "sanhumairu", 100)
+	sd.IndividualBuyRate = w.getFloat2Int64(ff, "sanhumairubi", 100)
 	//散户卖出
-	sd.IndividualSell = w.getFloat2Int64(ff, "sanhumaichu")
-	sd.IndividualSellRate = w.getFloat2Int64(ff, "sanhumaichubi")
+	sd.IndividualSell = w.getFloat2Int64(ff, "sanhumaichu", 100)
+	sd.IndividualSellRate = w.getFloat2Int64(ff, "sanhumaichubi", 100)
 	w.m.InsertOrUpdateStockDaily(sd)
 	return nil
 }
 
-func (w *WorkFlow) getFloat2Int64(mp map[string]interface{}, key string) int64 {
+func (w *WorkFlow) getFloat2Int64(mp map[string]interface{}, key string, rate int64) int64 {
 	str := mp[key].(string)
 	v, _ := strconv.ParseFloat(str, 64)
-	return int64(v*100 + 0.5)
+	return int64(v*float64(rate) + 0.5)
 }
 
 func (w *WorkFlow) convertUnicodeString(str string) string {
