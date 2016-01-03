@@ -30,6 +30,12 @@ func (m *Model) GetLastMoneyFlow(code string) (*MoneyFlow, error) {
 	return &t, err
 }
 
+func (m *Model) GetMoneyFlows(code string) ([]*MoneyFlow, error) {
+	var mfs []*MoneyFlow
+	_, err := m.o.QueryTable("money_flow").Filter("code", code).OrderBy("-market_day").All(&mfs)
+	return mfs, err
+}
+
 func (m *Model) InsertOrUpdateMoneyFlow(mf *MoneyFlow) (int64, error) {
 	var t MoneyFlow
 	err := m.o.QueryTable("money_flow").Filter("code", mf.Code).Filter("market_day", mf.MarketDay).One(&t)

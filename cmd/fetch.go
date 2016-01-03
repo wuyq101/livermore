@@ -29,6 +29,7 @@ var fetchCmd = &cobra.Command{
 		fmt.Printf("args %q \n", args)
 		if args == nil || len(args) <= 0 {
 			fmt.Println("please input stock code, like sh600036 sz000166")
+			return
 		}
 		w.FetchStockInfo(args)
 	},
