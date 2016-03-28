@@ -33,6 +33,6 @@ func (m *Model) GetStockByCode(code string) (*Stock, error) {
 
 func (m *Model) GetAllStocks() ([]*Stock, error) {
 	var stocks []*Stock
-	_, err := m.o.QueryTable("stock").All(&stocks)
+	_, err := m.o.QueryTable("stock").Limit(-1).All(&stocks)
 	return stocks, err
 }

@@ -20,7 +20,7 @@ func NewModel() *Model {
 
 func init() {
 	conf := config.Instance()
-	orm.Debug = true
+	//orm.Debug = true
 	orm.RegisterDataBase("default", "mysql", conf.DbConnStr)
 	orm.SetMaxIdleConns("default", 30)
 	orm.SetMaxOpenConns("default", 30)

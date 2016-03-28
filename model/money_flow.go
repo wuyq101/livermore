@@ -32,7 +32,7 @@ func (m *Model) GetLastMoneyFlow(code string) (*MoneyFlow, error) {
 
 func (m *Model) GetMoneyFlows(code string) ([]*MoneyFlow, error) {
 	var mfs []*MoneyFlow
-	_, err := m.o.QueryTable("money_flow").Filter("code", code).OrderBy("-market_day").All(&mfs)
+	_, err := m.o.QueryTable("money_flow").Filter("code", code).OrderBy("-market_day").Limit(-1).All(&mfs)
 	return mfs, err
 }
 

@@ -31,7 +31,7 @@ func (w *WorkFlow) FetchMoneyFlow(code string) error {
 		t, _ := time.ParseInLocation("20060102", mf.MarketDay, time.Local)
 		cnt = int64(time.Now().Sub(t).Hours()/24.0) + 2
 	}
-	logger.Info("cnd %d, code %s", cnt, code)
+	logger.Info("cnt %d, code %s", cnt, code)
 	stock, err := w.m.GetStockByCode(code)
 	if err != nil {
 		logger.Error("Failed to get stock by code %s, err %+v", code, err)
@@ -141,27 +141,27 @@ func (w *WorkFlow) FetchStockDailyByCode(code string) error {
 		Name: stock.Name,
 	}
 	hq := out["hq"].(map[string]interface{})
-	//涨跌额
+	//涨跌额 单位分
 	str := hq["zhangdiee"].(string)
 	v, _ := strconv.ParseFloat(str, 64)
 	sd.IncreaseAmount = int64(v*100 + 0.5)
-	//涨跌幅
+	//涨跌幅   百分比
 	str = hq["zhangdiefu"].(string)
 	v, _ = strconv.ParseFloat(str[0:len(str)-1], 64)
 	sd.IncreaseRate = int64(v*100 + 0.5)
-	//当前价格
+	//当前价格  单位分
 	str = hq["zuixin"].(string)
 	v, _ = strconv.ParseFloat(str, 64)
 	sd.CurPrice = int64(v*100 + 0.5)
-	//最高价格
+	//最高价格 单位分
 	str = hq["zuigao"].(string)
 	v, _ = strconv.ParseFloat(str, 64)
 	sd.HighPrice = int64(v*100 + 0.5)
-	//最低价格
+	//最低价格 单位分
 	str = hq["zuidi"].(string)
 	v, _ = strconv.ParseFloat(str, 64)
 	sd.LowPrice = int64(v*100 + 0.5)
-	//成交量
+	//成交量  手
 	str = hq["chengjiaoliang"].(string)
 	r, _ := utf8.DecodeLastRune([]byte(str))
 	idx = strings.IndexRune(str, r)
@@ -169,7 +169,7 @@ func (w *WorkFlow) FetchStockDailyByCode(code string) error {
 	str = strings.Replace(str, ",", "", -1)
 	intv, _ := strconv.ParseInt(str, 10, 64)
 	sd.Volumn = intv
-	//成交额
+	//成交额  分
 	str = hq["chengjiaoe"].(string)
 	r, _ = utf8.DecodeLastRune([]byte(str))
 	idx = strings.IndexRune(str, r)
@@ -183,17 +183,17 @@ func (w *WorkFlow) FetchStockDailyByCode(code string) error {
 	sd.MarketDay = tm.Format("20060102")
 
 	ff := out["fund_flow"].(map[string]interface{})
-	//主力买入
-	sd.MainBuy = w.getFloat2Int64(ff, "zhulimairu", 100)
+	//主力买入   分
+	sd.MainBuy = w.getFloat2Int64(ff, "zhulimairu", 1000000)
 	sd.MainBuyRate = w.getFloat2Int64(ff, "zhulimairubi", 100)
 	//主力卖出
-	sd.MainSell = w.getFloat2Int64(ff, "zhulimaichu", 100)
+	sd.MainSell = w.getFloat2Int64(ff, "zhulimaichu", 1000000)
 	sd.MainSellRate = w.getFloat2Int64(ff, "zhulimaichubi", 100)
 	//散户买入
-	sd.IndividualBuy = w.getFloat2Int64(ff, "sanhumairu", 100)
+	sd.IndividualBuy = w.getFloat2Int64(ff, "sanhumairu", 1000000)
 	sd.IndividualBuyRate = w.getFloat2Int64(ff, "sanhumairubi", 100)
 	//散户卖出
-	sd.IndividualSell = w.getFloat2Int64(ff, "sanhumaichu", 100)
+	sd.IndividualSell = w.getFloat2Int64(ff, "sanhumaichu", 1000000)
 	sd.IndividualSellRate = w.getFloat2Int64(ff, "sanhumaichubi", 100)
 	w.m.InsertOrUpdateStockDaily(sd)
 	return nil
@@ -250,7 +250,7 @@ func (w *WorkFlow) FetchStockInfoByCode(code string) error {
 	stock := &model.Stock{
 		Name:         name,
 		Code:         code,
-		TotalCapital: totalCapital,
+		TotalCapital: totalCapital, //
 		CurrCapital:  currCapital,
 	}
 	w.m.InsertOrUpdateStock(stock)
